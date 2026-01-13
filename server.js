@@ -56,7 +56,7 @@ app.use(express.json({ limit: '10mb' }));
 // Enable CORS
 app.use(cors({
     origin: process.env.NODE_ENV === 'production'
-        ? ['https://tools-vault-frontend.vercel.app']
+        ? ['https://tools-vault-frontend.vercel.app', 'https://tools-vault.app', 'https://www.tools-vault.app']
         : ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3000'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
