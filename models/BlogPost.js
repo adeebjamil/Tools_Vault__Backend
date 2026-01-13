@@ -75,7 +75,7 @@ const BlogPostSchema = new mongoose.Schema({
 
 // Index for better query performance
 BlogPostSchema.index({ status: 1 });
-BlogPostSchema.index({ slug: 1 });
+// Slug is already unique indexed by definition
 BlogPostSchema.index({ category: 1 });
 BlogPostSchema.index({ createdAt: -1 });
 
