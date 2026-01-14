@@ -77,6 +77,10 @@ app.use('/api/blog', require('./routes/blog'));
 // Upload routes (image uploads via Cloudinary)
 app.use('/api/upload', require('./routes/upload'));
 
+// Connection routes (Contact & Newsletter)
+app.use('/api/connections', require('./routes/connection'));
+
+
 // Health check route
 app.get('/api/health', (req, res) => {
     res.status(200).json({
