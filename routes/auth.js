@@ -105,6 +105,37 @@ router.post('/logout', protect, (req, res) => {
     });
 });
 
+// @route   PUT /api/auth/updatedetails
+// @desc    Update user details
+// @access  Private
+router.put('/updatedetails', protect, async (req, res) => {
+    try {
+        const fieldsToUpdate = {
+            name: req.body.name,
+            email: req.body.email,
+        };
+
+        if (req.body.avatar) {
+            fieldsToUpdate.avatar = req.body.avatar;
+        }
+
+        const user = await User.findByIdAndUpdate(req.user.id, fieldsToUpdate, {
+            new: true,
+            runValidators: true
+        });
+
+        res.status(200).json({
+            success: true,
+            data: user
+        });
+    } catch (err) {
+        res.status(500).json({
+            success: false,
+            error: err.message
+        });
+    }
+});
+
 // Helper function to get token and send response
 const sendTokenResponse = (user, statusCode, res) => {
     const token = user.getSignedJwtToken();
@@ -116,7 +147,8 @@ const sendTokenResponse = (user, statusCode, res) => {
             id: user._id,
             name: user.name,
             email: user.email,
-            role: user.role
+            role: user.role,
+            avatar: user.avatar
         }
     });
 };

@@ -73,13 +73,89 @@ router.get('/public/:slug', async (req, res) => {
 // ADMIN ROUTES
 // ==========================================
 
-// Get available topics for AI generation
-router.get('/topics', isAdmin, (req, res) => {
-    res.json({
-        success: true,
-        data: getTopics(),
-        aiAvailable: isOpenAIAvailable()
-    });
+const Topic = require('../models/Topic');
+
+// Get blog stats
+router.get('/stats', isAdmin, async (req, res) => {
+    try {
+        const total = await BlogPost.countDocuments();
+        const drafts = await BlogPost.countDocuments({ status: 'draft' });
+        const published = await BlogPost.countDocuments({ status: 'published' });
+
+        res.json({
+            success: true,
+            data: {
+                total,
+                drafts,
+                published
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Get available topics (from DB + Defaults)
+router.get('/topics', isAdmin, async (req, res) => {
+    try {
+        // Fetch from DB
+        let dbTopics = await Topic.find().sort({ name: 1 });
+
+        // Default topics from Service
+        const defaultTopics = getTopics();
+
+        // Merge: If DB has topics, use them. We can also choose to always show defaults. 
+        // Let's decide to SHOW BOTH (deduplicated by ID) or just DB if user created some.
+        // User request: "topics should be shown to us while creating AI post".
+        // Strategy: Combine DB topics with Default topics.
+
+        const allTopicsMap = new Map();
+
+        // Add defaults first
+        defaultTopics.forEach(t => allTopicsMap.set(t.id, t));
+
+        // Add/Overwrite with DB topics
+        dbTopics.forEach(t => allTopicsMap.set(t.id, t.toObject ? t.toObject() : t));
+
+        const combinedTopics = Array.from(allTopicsMap.values());
+
+        res.json({
+            success: true,
+            data: combinedTopics,
+            aiAvailable: isOpenAIAvailable()
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Create a new topic
+router.post('/topics', isAdmin, async (req, res) => {
+    try {
+        const { name, description } = req.body;
+
+        if (!name) {
+            return res.status(400).json({ success: false, error: 'Name is required' });
+        }
+
+        // Generate ID from name
+        const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '', '');
+
+        const existingTopic = await Topic.findOne({ id });
+        if (existingTopic) {
+            return res.status(400).json({ success: false, error: 'Topic already exists' });
+        }
+
+        const topic = await Topic.create({
+            id,
+            name,
+            description: description || name
+        });
+
+        res.status(201).json({ success: true, data: topic });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
 });
 
 // Get all posts (admin - includes drafts)
