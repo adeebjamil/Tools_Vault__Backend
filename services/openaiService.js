@@ -79,11 +79,11 @@ async function generateBlogPost(topic, postNumber = 1, internalLinks = []) {
 
     **REQUIRED OUTPUT FORMAT (JSON):**
     {
-      "title": "SEO Title",
-      "excerpt": "Short engaging summary (2-3 sentences)...",
-      "content": "Markdown content...",
+      "title": "The Actual Blog Post Title",
+      "excerpt": "A short, engaging summary of the post...",
+      "content": "# Introduction\n\nThis is the full blog post content in Markdown format...",
       "metaDescription": "SEO Meta Description",
-      "readingTime": 8
+      "readingTime": 5
     }
 
     If you cannot output JSON, just write the Blog Post in Markdown.`;
@@ -162,10 +162,15 @@ async function generateBlogPost(topic, postNumber = 1, internalLinks = []) {
                     parsedData.excerpt = parsedData.metaDescription;
                 }
 
+                // VALIDATION: Check for lazy content
+                if (!parsedData.content || parsedData.content.length < 100) {
+                    throw new Error("Content too short or missing");
+                }
+
                 console.log(`✅ Success (JSON) with ${provider.name}!`);
 
             } catch (jsonError) {
-                console.warn(`⚠️ JSON Parse failed for ${provider.name}, falling back to Raw Text.`);
+                console.warn(`⚠️ JSON Parse/Validation failed for ${provider.name}, falling back to Raw Text.`);
                 // FALLBACK: Treat entire output as Content
                 parsedData = {
                     title: `${topicInfo.name} (AI Generated)`,
