@@ -194,7 +194,7 @@ function generateMockPost(topicInfo) {
 
 // Generate multiple blog posts
 async function generateMultiplePosts(topic, count = 1, internalLinks = []) {
-    if (!openai) {
+    if (!isOpenAIAvailable()) {
         return [{
             success: false,
             error: 'AI API key not configured'
