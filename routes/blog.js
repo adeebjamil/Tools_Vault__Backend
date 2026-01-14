@@ -330,7 +330,7 @@ router.post('/:id/unpublish', isAdmin, async (req, res) => {
 // Generate posts using AI
 router.post('/generate', isAdmin, async (req, res) => {
     try {
-        const { topic, count = 1 } = req.body;
+        const { topic, count = 1, internalLinks = [] } = req.body;
 
         if (!isOpenAIAvailable()) {
             return res.status(503).json({
@@ -348,7 +348,7 @@ router.post('/generate', isAdmin, async (req, res) => {
         }
 
         // Generate posts using OpenAI
-        const results = await generateMultiplePosts(topic, count);
+        const results = await generateMultiplePosts(topic, count, internalLinks);
 
         // Save successful generations to database as drafts
         const savedPosts = [];
@@ -401,7 +401,7 @@ router.post('/generate', isAdmin, async (req, res) => {
 // Generate single post preview (without saving)
 router.post('/generate/preview', isAdmin, async (req, res) => {
     try {
-        const { topic } = req.body;
+        const { topic, internalLinks = [] } = req.body;
 
         if (!isOpenAIAvailable()) {
             return res.status(503).json({
@@ -414,7 +414,7 @@ router.post('/generate/preview', isAdmin, async (req, res) => {
             return res.status(400).json({ success: false, error: 'Topic is required' });
         }
 
-        const result = await generateBlogPost(topic);
+        const result = await generateBlogPost(topic, 1, internalLinks);
 
         if (result.success) {
             res.json({ success: true, data: result.data });

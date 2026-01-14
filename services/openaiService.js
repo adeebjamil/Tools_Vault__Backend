@@ -56,7 +56,7 @@ function isOpenAIAvailable() {
 }
 
 // Generate a single blog post using AI
-async function generateBlogPost(topic, postNumber = 1) {
+async function generateBlogPost(topic, postNumber = 1, internalLinks = []) {
     if (!openai) {
         return {
             success: false,
@@ -66,46 +66,77 @@ async function generateBlogPost(topic, postNumber = 1) {
 
     const topicInfo = BLOG_TOPICS.find(t => t.id === topic) || { name: topic, description: topic };
 
-    const systemPrompt = `You are a Senior Tech Editor for ToolsVault, a premier developer tools platform.
-Your task is to write high-quality, authoritative, and SEO-optimized blog posts that rank well on Google.
-Writing Style:
-- Professional, concise, and incredibly informative.
-- Use active voice and strong transitions.
-- Structure content with clear hierarchy (H2, H3).
-- Include deep technical insights, not just surface-level fluff.`;
+    const systemPrompt = `You are an expert technical content writer for ToolsVault.
+Your goal is to write authoritative, human-like, and SEO-optimized articles.
+You strictly avoid AI clichés and generic writing.
+You write as a real expert explaining complex topics to another developer.`;
+
+    let internalLinksSection = "";
+    if (internalLinks && internalLinks.length > 0) {
+        internalLinksSection = `
+6. **Internal Linking**:
+   - Naturally incorporate these internal links where relevant:
+   ${internalLinks.map(link => `- [${link.anchor}](${link.url})`).join('\n   ')}
+   - Do NOT force them; if they don't fit naturally, skip them.
+   - Suggest 3-5 internal links total if possible.`;
+    }
 
     const userPrompt = `Write a comprehensive, deep-dive blog post about "${topicInfo.name}" (${topicInfo.description}).
 
-STRICT CONTENT REQUIREMENTS:
-1. **Word Count**: Aim for 1200-1500 words of high-value content.
-2. **SEO Optimization**:
-   - Use the primary keyword naturally 3-4 times.
-   - Include LSI (Latent Semantic Indexing) keywords related to ${topicInfo.name}.
-   - Write a click-worthy title within 60 chars.
-   - Write a compelling meta description (150-160 chars) that encourages clicks.
-3. **Structure**:
-   - **Introduction**: Hook the reader, define the problem, and state the article's value.
-   - **Key Concepts**: Deep explanation of core ideas.
-   - **Practical Examples**: Real-world use cases or Code Snippets (use markdown code blocks).
-   - **Pros & Cons**: Balanced view (if applicable).
-   - **Best Practices**: Expert advice for 2026.
-   - **FAQ Section**: Answer 3 common questions about this topic.
-   - **Conclusion**: Summary and call to action.
-4. **Formatting**: Use Markdown for everything (Bold key terms, Lists for readability).
+STRICT ADHERENCE TO THESE RULES IS REQUIRED:
+
+1. **Topic Clarity**
+   - Never treat the topic as a placeholder.
+   - Clearly define what "${topicInfo.name}" means in the introduction.
+   - If the topic is broad, break it into sub-areas.
+
+2. **No Generic Writing**
+   - Avoid vague phrases like "has evolved significantly", "better performance", "in today's fast-paced world".
+   - Every claim must be explained with context or examples.
+   - Do NOT use filler lines.
+
+3. **Human-Written Style**
+   - Write as a real expert explaining to another human.
+   - Use a natural flow, not a robotic or textbook style.
+   - Avoid common AI clichés.
+
+4. **Practical Value**
+   - Include real-world use cases.
+   - Explain how people actually use this in workflows.
+   - Code examples should be relevant and meaningful (use markdown).
+
+5. **SEO Optimization**
+   - Use the primary keyword ("${topicInfo.name}") naturally 3-4 times.
+   - Use related semantic keywords.
+   - Use proper H2, H3 hierarchy.
+   - Keep paragraphs short and readable.
+${internalLinksSection}
+
+7. **Originality**
+   - Content must be original and not copied.
+   - No Wikipedia-style explanations.
+
+8. **Structure**:
+   - **Introduction**: Hook the reader, define the topic clearly.
+   - **Deep Dive**: Core concepts explained well.
+   - **Practical Application**: How to use it / Code examples.
+   - **Common Pitfalls**: What to avoid.
+   - **FAQ**: 3 real questions developers ask.
+   - **Conclusion**: Brief wrap-up.
 
 OUTPUT FORMAT (Valid JSON only):
 {
   "title": "Optimized SEO Title",
   "excerpt": "Engaging summary for the blog card (no markdown)",
-  "content": "Full markdown article content...",
-  "metaTitle": "Title Tag for Google",
-  "metaDescription": "Meta Description tag",
-  "keywords": ["primary keyword", "lsi keyword 1", "lsi keyword 2", "tech", "guide"],
+  "content": "Full markdown article content... (do NOT use H1 in content, start with H2)",
+  "metaTitle": "Title Tag for Google (max 60 chars)",
+  "metaDescription": "Meta Description tag (max 160 chars)",
+  "keywords": ["primary keyword", "lsi keyword", "etc"],
   "tags": ["tag1", "tag2"],
   "readingTime": number (estimated minutes)
 }
 
-Context: This is post #${postNumber} in a batch generation. Make it unique.`;
+Context: This is post #${postNumber} in a batch. Make it unique.`;
 
     try {
         // Detect provider for this specific request context
@@ -118,7 +149,7 @@ Context: This is post #${postNumber} in a batch generation. Make it unique.`;
                 { role: 'user', content: userPrompt }
             ],
             temperature: 0.7,
-            max_tokens: 3000,
+            max_tokens: 3500,
         });
 
         let content = response.choices[0].message.content;
@@ -168,56 +199,22 @@ function generateMockPost(topicInfo) {
         content: `
 ## Introduction
 
-${topicInfo.name} has evolved significantly in recent years, becoming a cornerstone for modern development workflows. This guide will explore everything you need to know to master it in 2026.
+${topicInfo.name} is a critical component in modern software development. Rather than being just a buzzword, it represents a shift in how we approach... [MOCK CONTENT - Please configure OpenAI API Key for full AI generation]
 
-## Why ${topicInfo.name} Matters
+## Core Concepts
 
-In today's fast-paced tech environment, efficiency is everything. ${topicInfo.name} offers:
-*   **Scalability**: Handle growing demands with ease.
-*   **Maintainability**: Write cleaner, more sustainable code.
-*   **Speed**: Accelerate your development cycle.
-
-## Core Concepts & Features
-
-### 1. Advanced Architecture
 Understanding the underlying structure is key. Most professionals overlook this, leading to technical debt.
 
-### 2. Integration Patterns
-How does it fit into your stack? 
+## Code Example
+
 \`\`\`javascript
-// Example configuration for ${topicInfo.id}
-const config = {
-  enabled: true,
-  mode: 'advanced',
-  retryAttempts: 3
-};
+const demo = "${topicInfo.name}";
+console.log(demo);
 \`\`\`
-
-## Best Practices for 2026
-
-*   **Audit Regularly**: Ensure your implementation stays secure.
-*   **Use Automation**: Don't do manually what scripts can handle.
-*   **Stay Updated**: The ecosystem changes weekly.
-
-## Common Pitfalls to Avoid
-
-| Mistake | Solution |
-| :--- | :--- |
-| Ignoring documentation | Read the official guides first |
-| Over-optimization | Build MVP, then refactor |
-| Security laxity | Implement headers & auth early |
-
-## Frequently Asked Questions
-
-**Q: Is ${topicInfo.name} suitable for beginners?**
-A: Absolutely! While it has depth, the basics are approachable.
-
-**Q: How does it compare to competitors?**
-A: It generally offers better performance in high-load scenarios.
 
 ## Conclusion
 
-Mastering ${topicInfo.name} is a journey. By following these best practices, you'll be well on your way to becoming an expert.
+Mastering ${topicInfo.name} is a journey involved constant learning.
         `.trim(),
         metaTitle: `${randomTitle} | ToolsVault Guide`,
         metaDescription: `A complete guide to ${topicInfo.name} including tips, tricks, and best practices.`,
@@ -230,7 +227,7 @@ Mastering ${topicInfo.name} is a journey. By following these best practices, you
 }
 
 // Generate multiple blog posts
-async function generateMultiplePosts(topic, count = 1) {
+async function generateMultiplePosts(topic, count = 1, internalLinks = []) {
     if (!openai) {
         return [{
             success: false,
@@ -241,7 +238,7 @@ async function generateMultiplePosts(topic, count = 1) {
     const results = [];
 
     for (let i = 0; i < count; i++) {
-        const result = await generateBlogPost(topic, i + 1);
+        const result = await generateBlogPost(topic, i + 1, internalLinks);
         results.push(result);
 
         // Add delay between requests to avoid rate limiting
