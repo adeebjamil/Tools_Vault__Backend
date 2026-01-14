@@ -80,8 +80,9 @@ async function generateBlogPost(topic, postNumber = 1, internalLinks = []) {
     **REQUIRED OUTPUT FORMAT (JSON):**
     {
       "title": "SEO Title",
+      "excerpt": "Short engaging summary (2-3 sentences)...",
       "content": "Markdown content...",
-      "metaDescription": "Summary",
+      "metaDescription": "SEO Meta Description",
       "readingTime": 8
     }
 
@@ -155,6 +156,12 @@ async function generateBlogPost(topic, postNumber = 1, internalLinks = []) {
 
                 // console.log("DEBUG JSON CONTENT:", clean);
                 parsedData = JSON.parse(clean);
+
+                // Ensure excerpt exists if missing
+                if (!parsedData.excerpt && parsedData.metaDescription) {
+                    parsedData.excerpt = parsedData.metaDescription;
+                }
+
                 console.log(`✅ Success (JSON) with ${provider.name}!`);
 
             } catch (jsonError) {
@@ -163,6 +170,7 @@ async function generateBlogPost(topic, postNumber = 1, internalLinks = []) {
                 parsedData = {
                     title: `${topicInfo.name} (AI Generated)`,
                     content: content,
+                    excerpt: `A comprehensive guide about ${topicInfo.name}.`,
                     metaDescription: `Deep dive into ${topicInfo.name}`,
                     readingTime: 5,
                     aiGenerated: true
