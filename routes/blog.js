@@ -158,6 +158,43 @@ router.post('/topics', isAdmin, async (req, res) => {
     }
 });
 
+// Update a topic
+router.put('/topics/:id', isAdmin, async (req, res) => {
+    try {
+        const { name, description } = req.body;
+
+        const topic = await Topic.findOne({ id: req.params.id });
+
+        if (!topic) {
+            return res.status(404).json({ success: false, error: 'Topic not found' });
+        }
+
+        if (name) topic.name = name;
+        if (description) topic.description = description;
+
+        await topic.save();
+
+        res.json({ success: true, data: topic });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Delete a topic
+router.delete('/topics/:id', isAdmin, async (req, res) => {
+    try {
+        const topic = await Topic.findOneAndDelete({ id: req.params.id });
+
+        if (!topic) {
+            return res.status(404).json({ success: false, error: 'Topic not found' });
+        }
+
+        res.json({ success: true, message: 'Topic deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // Get all posts (admin - includes drafts)
 router.get('/', isAdmin, async (req, res) => {
     try {
